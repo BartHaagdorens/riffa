@@ -1,24 +1,24 @@
 # ----------------------------------------------------------------------
 # Copyright (c) 2016, The Regents of the University of California All
 # rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-# 
+#
 #     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
-# 
+#
 #     * Redistributions in binary form must reproduce the above
 #       copyright notice, this list of conditions and the following
 #       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-# 
+#
 #     * Neither the name of The Regents of the University of California
 #       nor the names of its contributors may be used to endorse or
 #       promote products derived from this software without specific
 #       prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -41,7 +41,7 @@
 
 # You must specify the following variables. You can leave the defaults if you
 # like, but make sure they will work in your system.
-# The VENDOR_ID _must_ match what is configured on your FPGA's PCIe endpoint 
+# The VENDOR_ID _must_ match what is configured on your FPGA's PCIe endpoint
 # header. Xilinx has a VENDOR_ID = 10EE.
 NAME := riffa
 VENDOR_ID0 := 10EE
@@ -52,6 +52,7 @@ MAJNUM := 100
 KVER := $(shell uname -r)
 KDIR := /lib/modules/`uname -r`/build
 RHR := /etc/redhat-release
+RPI := /etc/rpi-issue
 LIB_SRCS := riffa.c
 LIB_OBJS := $(patsubst %.c,%.o,$(LIB_SRCS))
 LIB_HDR := riffa.h
@@ -98,7 +99,7 @@ $(NAME).ko: *.c *.h
 	sed -i 's/#define VENDOR_ID1 [^\n]*/#define VENDOR_ID1 0x$(VENDOR_ID1)/g' $(DRVR_HDR)
 	sed -i 's/#define DEBUG [^\n]*/#define DBUG 1/g' $(DRVR_HDR)
 	sed -i 's/#define DBUG [^\n]*/#define $(DBUGVAL) 1/g' $(DRVR_HDR)
-	make -C $(KDIR) SUBDIRS=`pwd` modules
+	make -C $(KDIR) M=`pwd` modules
 	rm -rf $(LIB_OBJS)
 
 $(NAME).so.$(LIB_VER): $(LIB_OBJS)
@@ -109,7 +110,7 @@ $(LIB_OBJS): $(LIB_SRCS)
 
 load: $(NAME).ko
 	insmod $(NAME).ko
-	
+
 unload:
 	rmmod $(NAME)
 
@@ -118,9 +119,10 @@ clean:
 
 setup:
 	if [ -f "$(RHR)" ]; then yum install kernel-devel-`uname -r`;\
+	elif [ -f "$(RPI)" ]; then apt-get install raspberrypi-kernel-headers;\
 	else apt-get install linux-headers-`uname -r`; fi
 
-install: $(NAME).so.$(LIB_VER) $(NAME).ko 
+install: $(NAME).so.$(LIB_VER) $(NAME).ko
 	mkdir -p /lib/modules/$(KVER)/kernel/drivers/$(NAME)
 	cp $(NAME).ko /lib/modules/$(KVER)/kernel/drivers/$(NAME)/
 	if [ -f "$(RHR)" ]; then\
@@ -140,7 +142,7 @@ install: $(NAME).so.$(LIB_VER) $(NAME).ko
 	ldconfig
 	depmod
 
-uninstall: 
+uninstall:
 	rm -f /usr/local/lib/lib$(NAME).so*
 	rm -f /usr/local/include/$(LIB_HDR)
 	rm -f /usr/local/include/$(DRVR_HDR)
@@ -151,5 +153,3 @@ uninstall:
 	else cp /etc/modules ./etc.modules.bak; sed -i '/$(NAME)/d' /etc/modules; fi
 	ldconfig
 	depmod
-
-
