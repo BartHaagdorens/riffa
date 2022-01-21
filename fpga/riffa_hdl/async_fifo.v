@@ -47,6 +47,9 @@
 // Synthesis Techniques for Asynchronous FIFO Design with Asynchronous Pointer 
 // Comparisons
 //-----------------------------------------------------------------------------
+
+// see https://github.com/KastnerRG/riffa/issues/32, comment by gxflying
+`include "functions.vh"
 `timescale 1ns/1ns
 module async_fifo #(
 	parameter C_WIDTH = 32,	// Data bus width
@@ -69,7 +72,6 @@ module async_fifo #(
 	output RD_EMPTY 						// Empty condition (RD_CLK)
 );
 
-`include "functions.vh"
 
 wire						wCmpEmpty;
 wire						wCmpFull;
