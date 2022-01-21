@@ -44,7 +44,6 @@
 `timescale 1ns/1ns
 `include "trellis.vh"
 `include "ultrascale.vh"
-
 module rxr_engine_ultrascale
     #(parameter C_PCI_DATA_WIDTH = 128,
       parameter C_RX_PIPELINE_DEPTH=10)
@@ -69,9 +68,9 @@ module rxr_engine_ultrascale
      output                                   RXR_DATA_VALID,
      output [(C_PCI_DATA_WIDTH/32)-1:0]       RXR_DATA_WORD_ENABLE,
      output                                   RXR_DATA_START_FLAG,
-     output [`clog2s(C_PCI_DATA_WIDTH/32)-1:0] RXR_DATA_START_OFFSET,
+     output [clog2s(C_PCI_DATA_WIDTH/32)-1:0] RXR_DATA_START_OFFSET,
      output                                   RXR_DATA_END_FLAG,
-     output [`clog2s(C_PCI_DATA_WIDTH/32)-1:0] RXR_DATA_END_OFFSET,
+     output [clog2s(C_PCI_DATA_WIDTH/32)-1:0] RXR_DATA_END_OFFSET,
      
      output [`SIG_FBE_W-1:0]                  RXR_META_FDWBE,
      output [`SIG_LBE_W-1:0]                  RXR_META_LDWBE,
@@ -109,7 +108,7 @@ module rxr_engine_ultrascale
     localparam C_RX_BE_INDEX = C_PCI_DATA_WIDTH*C_RX_INPUT_STAGES;
 
     // Mask width of the calculated SOF/EOF fields
-    localparam C_OFFSET_WIDTH = `clog2s(C_PCI_DATA_WIDTH/32);
+    localparam C_OFFSET_WIDTH = clog2s(C_PCI_DATA_WIDTH/32);
 
     wire                                      wMAxisCqSop;
     wire                                      wMAxisCqTlast;
@@ -151,22 +150,6 @@ module rxr_engine_ultrascale
     wire [`SIG_TYPE_W-1:0]                              wType;
     reg                                                 rValid,_rValid;
     reg                                                 rRST;
-    
-
-    function [ `EXT_TYPE_W - 1: 0 ] upkt_to_trellis_type;
-        input [`UPKT_TYPE_W : 0 ] WR_UPKT_TYPE;
-        begin
-            /* verilator lint_off CASEX */
-            casex(WR_UPKT_TYPE)
-                {`UPKT_REQ_RD,1'bx}: upkt_to_trellis_type = `TRLS_REQ_RD;
-                {`UPKT_REQ_WR,1'bx}: upkt_to_trellis_type = `TRLS_REQ_WR;
-                {`UPKT_MSG   ,1'b0}: upkt_to_trellis_type = `TRLS_MSG_ND;
-                {`UPKT_MSG   ,1'b1}: upkt_to_trellis_type = `TRLS_MSG_WD;
-                default:             upkt_to_trellis_type = `TRLS_REQ_RD;
-            endcase
-            /* verilator lint_on CASEX */
-        end
-    endfunction // if
 
     assign DONE_RXR_RST = ~rRST;
 
