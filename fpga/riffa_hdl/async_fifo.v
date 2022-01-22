@@ -51,6 +51,7 @@
 // see https://github.com/KastnerRG/riffa/issues/32, comment by gxflying
 `include "functions.vh"
 `timescale 1ns/1ns
+`default_nettype wire
 module async_fifo #(
 	parameter C_WIDTH = 32,	// Data bus width
 	parameter C_DEPTH = 1024,	// Depth of the FIFO
