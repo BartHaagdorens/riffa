@@ -247,6 +247,12 @@ int pcie_capability_write_dword(struct pci_dev *dev, int pos, u32 val)
 }
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,18,0)
+	#define pci_alloc_consistent(d, s, a)     dma_alloc_coherent(&(d)->dev, s, a, GFP_ATOMIC)
+	#define pci_free_consistent(d, s, a, b)   dma_free_coherent(&(d)->dev, s, a, b)
+	#define pci_set_dma_mask(d, m)            dma_set_mask(&(d)->dev, m)
+	#define pci_set_consistent_dma_mask(d, m) dma_set_coherent_mask(&(d)->dev, m)
+#endif
 
 
 
@@ -455,10 +461,12 @@ static inline struct sg_mapping * fill_sg_buf(struct fpga_state * sc, int chnl,
 
 		#if LINUX_VERSION_CODE < KERNEL_VERSION(4,6,0)
 		num_pages = get_user_pages(current, current->mm, udata, num_pages_reqd, 1, 0, pages, NULL);
-		#elsif LINUX_VERSION_CODE < KERNEL_VERSION(4,9,0)
+		#elif LINUX_VERSION_CODE < KERNEL_VERSION(4,9,0)
 		num_pages = get_user_pages(udata, num_pages_reqd, 1, 0, pages, NULL);
-		#else
+		#elif LINUX_VERSION_CODE < KERNEL_VERSION(6,5,0)
 		num_pages = get_user_pages(udata, num_pages_reqd, FOLL_WRITE, pages, NULL);
+		#else
+		num_pages = get_user_pages(udata, num_pages_reqd, FOLL_WRITE, pages);
 		#endif
 
 		#if LINUX_VERSION_CODE < KERNEL_VERSION(5,8,0)
@@ -1597,7 +1605,12 @@ static int __init fpga_init(void)
 		return (error);
 	}
 
-	mymodule_class = class_create(THIS_MODULE, DEVICE_NAME);
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+		mymodule_class = class_create(THIS_MODULE, DEVICE_NAME);
+	#else
+		mymodule_class = class_create(DEVICE_NAME);
+	#endif
+
 	if (IS_ERR(mymodule_class)) {
 		error = PTR_ERR(mymodule_class);
 		printk(KERN_ERR "riffa: class_create() returned %d\n", error);
